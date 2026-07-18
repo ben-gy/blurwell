@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' blob: data: https://cloudflareinsights.com; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Blur faces in photos and video entirely in your browser. Automatic face detection, manual boxes for plates and badges. Nothing is uploaded; works offline."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta property="og:title" content="Blurwell" />
+    <meta
+      property="og:description"
+      content="Blur faces in photos and video entirely in your browser — nothing is uploaded."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://blurwell.benrichardson.dev/" />
+    <meta property="og:image" content="https://blurwell.benrichardson.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Blurwell" />
+    <meta
+      name="twitter:description"
+      content="Blur faces in photos and video entirely in your browser — nothing is uploaded."
+    />
+    <meta name="twitter:image" content="https://blurwell.benrichardson.dev/og.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Blurwell — Blur faces in photos and video, in your browser</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Blurwell",
+        "description": "Blur faces in photos and video entirely in your browser. Nothing is uploaded.",
+        "url": "https://blurwell.benrichardson.dev/",
+        "image": "https://blurwell.benrichardson.dev/og.png",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Web browser",
+        "browserRequirements": "Requires JavaScript",
+        "author": { "@type": "Person", "name": "Ben Richardson", "url": "https://benrichardson.dev" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "ba2bab2193ba42c1bea3d6714fcd0e28"}'
+    ></script>
+  </head>
+  <body>
+    <div id="app">
+      <header class="site-header">
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="9" r="4" />
+            <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+          </svg>
+          <span class="brand-name">Blurwell</span>
+        </div>
+        <nav class="site-nav">
+          <button type="button" class="nav-button" data-modal="how">How it works</button>
+          <button type="button" class="nav-button" data-modal="privacy">Privacy</button>
+          <button type="button" class="nav-button" data-modal="about">About</button>
+        </nav>
+      </header>
+
+      <main class="main-content">
+        <button type="button" class="trust-banner" data-modal="privacy">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="trust-icon">
+            <path d="M12 3l7 3v6c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6l7-3z" />
+          </svg>
+          <span
+            >Runs entirely
+            <span class="glossary-link" data-term="on-device">on your device</span>. Your photos and
+            video are never uploaded.</span
+          >
+          <span class="trust-more">Read the privacy model →</span>
+        </button>
+
+        <!-- ── Intake ── -->
+        <section class="intake" id="intake">
+          <h1 class="headline">Blur faces in photos and video</h1>
+          <p class="subhead">
+            Faces are found by a neural net that ships with this page and the blur is
+            <span class="glossary-link" data-term="burned in">burned into the pixels</span>. Draw
+            your own boxes over anything else — licence plates, name badges, screens.
+          </p>
+
+          <div
+            class="dropzone"
+            id="dropzone"
+            role="button"
+            tabindex="0"
+            aria-label="Choose a photo or video to redact"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="dropzone-icon">
+              <path d="M12 16V4m0 0L8 8m4-4 4 4" />
+              <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" />
+            </svg>
+            <p class="dropzone-title">Drop a photo or video here</p>
+            <p class="dropzone-hint">or tap to choose · paste an image with ⌘V</p>
+            <p class="dropzone-formats">JPG · PNG · WebP · MP4 · MOV · WebM</p>
+          </div>
+          <input type="file" id="file-input" accept="image/*,video/*" hidden />
+
+          <p class="intake-note" id="first-run-note">
+            The face model and its runtime are about 11 MB and download once. After that Blurwell
+            works with the network switched off.
+          </p>
+        </section>
+
+        <!-- ── Editor ── -->
+        <section class="editor" id="editor" hidden>
+          <div class="stage-wrap">
+            <div class="stage" id="stage">
+              <canvas id="preview-canvas" class="preview-canvas"></canvas>
+              <div class="box-layer" id="box-layer"></div>
+              <video id="preview-video" class="preview-video" playsinline muted hidden></video>
+            </div>
+            <p class="stage-hint" id="stage-hint">
+              Drag on the image to add a box · click a box to remove it
+            </p>
+          </div>
+
+          <aside class="controls" id="controls">
+            <div class="file-summary">
+              <p class="file-name" id="file-name">—</p>
+              <p class="file-meta" id="file-meta">—</p>
+            </div>
+
+            <div class="control-group">
+              <span class="control-label">Redaction style</span>
+              <div class="segmented" id="style-group" role="radiogroup" aria-label="Redaction style">
+                <button type="button" role="radio" data-style="blur" aria-checked="true">Blur</button>
+                <button type="button" role="radio" data-style="pixelate" aria-checked="false">
+                  Pixelate
+                </button>
+                <button type="button" role="radio" data-style="solid" aria-checked="false">
+                  Black box
+                </button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="strength">
+                Strength <output id="strength-value">75%</output>
+              </label>
+              <input type="range" id="strength" min="0" max="100" value="75" />
+            </div>
+
+            <div class="control-group">
+              <label class="control-label" for="padding">
+                <span class="glossary-link" data-term="padding">Box padding</span>
+                <output id="padding-value">18%</output>
+              </label>
+              <input type="range" id="padding" min="0" max="60" value="18" />
+            </div>
+
+            <div class="control-group" id="video-only-controls" hidden>
+              <label class="control-label" for="persistence">
+                <span class="glossary-link" data-term="persistence">Persistence</span>
+                <output id="persistence-value">400 ms</output>
+              </label>
+              <input type="range" id="persistence" min="0" max="1500" step="50" value="400" />
+              <label class="checkbox">
+                <input type="checkbox" id="remove-audio" />
+                <span>Remove audio track</span>
+              </label>
+            </div>
+
+            <div class="control-group">
+              <span class="control-label" id="detect-summary">—</span>
+              <button type="button" class="secondary-button" id="redetect">
+                Detect faces again
+              </button>
+            </div>
+
+            <button type="button" class="primary-button" id="run">Redact &amp; export</button>
+            <button type="button" class="secondary-button" id="reset">Start over</button>
+          </aside>
+        </section>
+
+        <!-- ── Progress ── -->
+        <section class="progress-panel" id="progress-panel" hidden aria-live="polite">
+          <p class="progress-phase" id="progress-phase">Working…</p>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <p class="progress-detail" id="progress-detail">—</p>
+          <button type="button" class="secondary-button" id="cancel">Cancel</button>
+        </section>
+
+        <!-- ── Result ── -->
+        <section class="result-panel" id="result-panel" hidden>
+          <h2 class="result-title">Redacted file ready</h2>
+          <p class="result-meta" id="result-meta">—</p>
+          <p class="result-warning">
+            Check the export before you publish it. Automatic detection can miss profile views,
+            distant faces and heavy motion blur.
+          </p>
+          <div class="result-actions">
+            <button type="button" class="primary-button" id="download">Download</button>
+            <button type="button" class="secondary-button" id="share" hidden>Share</button>
+            <button type="button" class="secondary-button" id="copy" hidden>Copy image</button>
+            <button type="button" class="secondary-button" id="again">Redact another</button>
+          </div>
+        </section>
+
+        <div class="error-banner" id="error-banner" hidden role="alert">
+          <p id="error-message">—</p>
+          <button type="button" class="secondary-button" id="error-retry">Try again</button>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <span
+          >Built by
+          <a href="https://benrichardson.dev/" target="_blank" rel="noopener">benrichardson.dev</a>
+          ·
+          <a href="https://sites.benrichardson.dev" target="_blank" rel="noopener"
+            >more tools &amp; sites</a
+          ></span
+        >
+      </footer>
+    </div>
+
+    <!-- ── Event log drawer ── -->
+    <button type="button" class="eventlog-toggle" id="eventlog-toggle" aria-expanded="false">
+      Event log <span class="eventlog-count" hidden>0</span>
+    </button>
+    <aside class="eventlog" id="eventlog" aria-hidden="true" aria-label="Event log">
+      <header class="eventlog-header">
+        <span>Event log</span>
+        <button type="button" class="eventlog-close" aria-label="Close event log">×</button>
+      </header>
+      <ul class="eventlog-list"></ul>
+    </aside>
+
+    <!-- ── Modals ── -->
+    <div class="modal-backdrop" id="modal-backdrop" hidden></div>
+
+    <template id="modal-how">
+      <h2>How Blurwell works</h2>
+      <ol class="steps">
+        <li>
+          <strong>Your file is opened locally.</strong> Choosing a file hands it to this tab, nothing
+          more. There is no upload endpoint in this application — you can watch the network panel
+          stay silent, or switch the network off entirely.
+        </li>
+        <li>
+          <strong>A face detector runs on your processor.</strong> Blurwell ships
+          <span class="glossary-link" data-term="blazeface">BlazeFace</span>, a 224 KB neural net,
+          together with its WebAssembly runtime. Both are served from this site, not a third-party
+          CDN, so no request reveals that you're anonymising anything.
+        </li>
+        <li>
+          <strong>Video is scanned before it is rendered.</strong> Blurwell walks the whole clip
+          first and records where faces appear over time. Because it has the complete picture before
+          it draws anything, it can cover a frame using detections from just before
+          <em>and</em> just after it — so a face the detector misses for a few frames stays hidden
+          instead of flashing into view.
+        </li>
+        <li>
+          <strong>You correct it.</strong> Delete a false positive, or drag boxes over anything a
+          face detector cannot know about: licence plates, name badges, tattoos, a screen in the
+          background.
+        </li>
+        <li>
+          <strong>The blur is burned in.</strong> Each region is destroyed in the output pixels — it
+          is not an overlay, and there is no layer to peel away. Images are rebuilt from pixels
+          alone, so <span class="glossary-link" data-term="exif">EXIF and GPS data</span> don't
+          survive either.
+        </li>
+        <li>
+          <strong>Video is re-encoded in the tab.</strong>
+          <span class="glossary-link" data-term="webcodecs">WebCodecs</span> drives your device's
+          own hardware encoder to write a standard
+          <span class="glossary-link" data-term="h.264">H.264</span> MP4. Audio is copied through
+          untouched, or dropped if you ask for that.
+        </li>
+      </ol>
+    </template>
+
+    <template id="modal-privacy">
+      <h2>Privacy &amp; threat model</h2>
+
+      <h3>Protected</h3>
+      <ul>
+        <li>
+          Your photos and video never leave your device. Blurwell has no server, no upload, and no
+          account system. Once the page has loaded it runs fully offline.
+        </li>
+        <li>
+          Face detection runs against a model stored on this site and executed on your own
+          processor. No image data is sent anywhere for inference.
+        </li>
+        <li>
+          <strong>No face recognition, ever.</strong> The model returns rectangles. Blurwell does not
+          compute face embeddings, does not match against any database, and cannot tell you who
+          anyone is.
+        </li>
+        <li>
+          Redaction is burned into the exported pixels. There is no hidden layer containing the
+          original detail.
+        </li>
+        <li>
+          Image exports are rebuilt from raw pixels, so EXIF, GPS coordinates and camera serial
+          numbers are dropped as a side effect.
+        </li>
+      </ul>
+
+      <h3>Not protected</h3>
+      <ul>
+        <li>
+          <strong>Automatic detection is not perfect.</strong> Profile views, faces far from the
+          camera, partial occlusion and heavy motion blur can all be missed. Always review the
+          export before publishing, and add manual boxes where you need certainty.
+        </li>
+        <li>
+          <strong>Your original file is untouched.</strong> That's deliberate — but it means you
+          must share the export, not the original. They sit next to each other in your downloads
+          folder.
+        </li>
+        <li>
+          Hiding a face does not hide context. Clothing, tattoos, a vehicle, the location, the
+          timestamp, someone's gait or voice can all still identify a person.
+        </li>
+        <li>
+          <span class="glossary-link" data-term="pixelate">Pixelation</span> at low strength is
+          weaker than it looks and can sometimes be partially reversed. The default is a heavy blur
+          for that reason; a black box is the strongest option.
+        </li>
+        <li>
+          Loading this page is an ordinary web request, so GitHub Pages sees your IP address, as it
+          would for any website.
+        </li>
+      </ul>
+
+      <h3>Trust surface</h3>
+      <ul>
+        <li>
+          The static bundle served by GitHub Pages, built from the public source repository by
+          GitHub Actions.
+        </li>
+        <li>The TLS chain between your browser and GitHub Pages.</li>
+        <li>
+          A Cloudflare Web Analytics beacon records anonymous page views — no cookies, no
+          fingerprinting, no cross-site tracking; your files and data are never sent to it.
+        </li>
+        <li>
+          Nothing else. The model, the WebAssembly runtime and the fonts are all served from this
+          origin — there are no third-party requests while you work.
+        </li>
+      </ul>
+    </template>
+
+    <template id="modal-about">
+      <h2>About Blurwell</h2>
+      <p>
+        Blurwell exists because of a small absurdity: almost every free "blur the faces" tool asks
+        you to upload the unblurred file first. For the footage where anonymity actually matters —
+        a protest, a dashcam near-miss, a research recording, someone else's child in the background
+        — handing the original to a stranger's server is precisely the thing you were trying to
+        avoid.
+      </p>
+      <p>
+        So Blurwell does the whole job in the tab: detection, redaction and re-encoding all happen on
+        your own hardware, and the tool keeps working with the network switched off.
+      </p>
+      <p>
+        Built by <a href="https://benrichardson.dev/" target="_blank" rel="noopener">Ben Richardson</a>.
+        The rest of the catalogue lives at
+        <a href="https://sites.benrichardson.dev" target="_blank" rel="noopener"
+          >sites.benrichardson.dev</a
+        >.
+      </p>
+      <p>
+        Source:
+        <a href="https://github.com/ben-gy/blurwell" target="_blank" rel="noopener"
+          >github.com/ben-gy/blurwell</a
+        >. MIT licensed.
+      </p>
+    </template>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

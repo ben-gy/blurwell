@@ -1,0 +1,17 @@
+{
+  "name": "Blurwell — blur faces in photos and video",
+  "short_name": "Blurwell",
+  "description": "Blur faces in photos and video entirely in your browser. Nothing is uploaded.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0f12",
+  "theme_color": "#0d0f12",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
