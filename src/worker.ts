@@ -1,4 +1,7 @@
 /// <reference lib="webworker" />
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Ben Richardson — https://benrichardson.dev
+// Additional terms under AGPL-3.0 section 7(b) apply; see ADDITIONAL-TERMS.md.
 /**
  * The whole pipeline — probe, detect, redact, encode — runs here so the main
  * thread never blocks. Progress is streamed back by `postMessage`; nothing in
