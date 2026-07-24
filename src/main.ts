@@ -6,11 +6,6 @@
  * thin: no image maths lives here, only wiring.
  */
 
-// feedback:begin (managed by hub/scripts/feedback/backfill.mjs)
-import { mountFeedback } from './feedback';
-mountFeedback();
-// feedback:end
-
 import './styles/main.css';
 
 import { BoxEditor } from './boxeditor';
