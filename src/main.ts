@@ -233,6 +233,22 @@ async function loadFile(file: File): Promise<void> {
   }
 }
 
+/** Fetches the bundled demo photo and routes it through the real upload path. */
+async function loadSample(): Promise<void> {
+  try {
+    log.add('info', 'Loading the sample photo…');
+    const response = await fetch('samples/demo.jpg');
+    if (!response.ok) throw new Error(`sample fetch ${response.status}`);
+    const blob = await response.blob();
+    // Wrap it in a File and hand it to the SAME function a real upload calls.
+    await loadFile(new File([blob], 'sample.jpg', { type: blob.type || 'image/jpeg' }));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not load the sample.';
+    showError('Could not load the sample photo.');
+    log.add('bad', `Sample failed: ${message}`);
+  }
+}
+
 // ────────────────────────────────────────────────────────── results ──
 
 function outputMime(file: File): string {
@@ -445,13 +461,6 @@ function bindActions(): void {
   });
 }
 
-function registerServiceWorker(): void {
-  if (!('serviceWorker' in navigator) || location.protocol === 'http:') return;
-  navigator.serviceWorker.register('/sw.js').catch(() => {
-    // Offline support is a bonus; failing to register must not break the tool.
-  });
-}
-
 function init(): void {
   loadPrefs();
   initModals();
@@ -470,9 +479,15 @@ function init(): void {
   bindActions();
   initDropzone((file) => void loadFile(file));
 
+  // The sample pill lives inside the dropzone, whose click opens the file
+  // picker — stop the event so tapping the pill doesn't also fire that.
+  must('sample-btn').addEventListener('click', (event) => {
+    event.stopPropagation();
+    void loadSample();
+  });
+
   log.add('info', 'Blurwell ready — everything below happens on your device.');
   showPanel('intake');
-  registerServiceWorker();
 }
 
 init();

@@ -302,6 +302,40 @@ a:hover {
   margin-top: var(--space-sm);
 }
 
+.sample-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: var(--space-md);
+  padding: 7px 15px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.sample-link:hover,
+.sample-link:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  outline: none;
+}
+
+.sample-icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .intake-note {
   max-width: 52ch;
   margin: var(--space-xl) auto 0;
